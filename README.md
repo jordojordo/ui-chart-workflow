@@ -9,7 +9,7 @@ To build the charts needed to provide a Helm repository, use the workflow found 
 ### Extension Chart Inputs
 
 | Property | Required | Description |
-| -------- | --- | -----------------|
+| -------- | :---: | -----------------|
 | `permissions` | `true` | This gives the workflow permissions to checkout, build, and push to the repository or registry. |
 | `target_branch` | `true` | The Github branch target for the extension build assets |
 
@@ -41,7 +41,7 @@ To build an Extension Catalog Image (ECI) for air-gapped/private repositories, u
 ### Extension Catalog Image Inputs
 
 | Property | Required | Description |
-| -------- | --- | -----------------|
+| -------- | :---: | -----------------|
 | `permissions` | `true` | This gives the workflow permissions to checkout, build, and push to the repository or registry. |
 | `registry_target` | `true` | The container registry to publish the catalog image |
 | `registry_user` | `true` | The username connected to the container registry |
