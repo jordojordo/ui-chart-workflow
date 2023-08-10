@@ -19,7 +19,7 @@ on:
 jobs:
   build:
     name: Build container image
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref_type == 'tag' || (github.ref == 'refs/heads/main' && github.event_name != 'pull_request')
     runs-on: ubuntu-latest
     permissions:
       actions: write
