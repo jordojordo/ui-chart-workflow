@@ -39,8 +39,18 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Parse Extension Name
+        if: github.ref_type == 'tag'
+        id: parsed-name
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          wget https://raw.githubusercontent.com/jordojordo/ui-chart-workflow/main/scripts/parse-ext-name.sh
+          chmod +x ./parse-ext-name.sh
+          ./parse-ext-name.sh ${{ inputs.tagged_release }} ${{ github.run_id }} "charts"
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
@@ -109,8 +119,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Download build artifact
         uses: actions/download-artifact@v3
