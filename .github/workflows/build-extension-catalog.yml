@@ -23,12 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: write
-      deployments: write
-      id-token: write
+      contents: read
       packages: write
-      pages: write
-      pull-requests: write
 
     steps:
       - name: Checkout repository
