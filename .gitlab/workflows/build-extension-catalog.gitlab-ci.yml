@@ -1,5 +1,25 @@
+versions:
+  stage: check_version
+  image: registry.gitlab.com/gitlab-ci-utils/curl-jq:latest
+  script:
+    - |
+      PACKAGE_VERSION=$(jq -r .version ./package.json)
+      PACKAGE_NAME=$(jq -r .name ./package.json)
+      IMAGE=$REGISTRY/$IMAGE_NAME/ui-extension-$PACKAGE_NAME
+      
+      readarray -t VERSIONS < <(curl --header "PRIVATE-TOKEN: $CI_REGISTRY_PASSWORD" "$CI_REGISTRY_IMAGE/tags")
+
+      echo -e "Checking releases for version: ${PACKAGE_VERSION}"
+      for version in "${VERSIONS[@]}"; do
+        if [[ ${version} == ${PACKAGE_VERSION} ]]; then
+          echo "Package version has not been updated, skipping build."
+          exit 1
+        fi
+      done
+
 build_and_release:
   stage: build_catalog
+  image: registry.suse.com/bci/bci-base:latest
   script:
     - zypper addrepo https://download.opensuse.org/repositories/devel:languages:nodejs/SLE_12_SP5/devel:languages:nodejs.repo
     - zypper --non-interactive --no-gpg-checks refresh
@@ -9,20 +29,6 @@ build_and_release:
     - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
     - podman info
     - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - |
-      PACKAGE_VERSION=$(jq -r .version ./package.json)
-      PACKAGE_NAME=$(jq -r .name ./package.json)
-      IMAGE=$REGISTRY/$IMAGE_NAME/ui-extension-$PACKAGE_NAME
-
-      readarray -t VERSIONS < <(podman search $IMAGE --list-tags --format="{{.Tag}}")
-
-      echo -e "Checking releases for version: ${PACKAGE_VERSION}"
-      for version in "${VERSIONS[@]}"; do
-        if [[ ${version} == ${PACKAGE_VERSION} ]]; then
-          echo "Package version has not been updated, skipping build."
-          exit 1
-        fi
-      done
     - npm install -g --unsafe-perm yarn
     - yarn
     - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAME
