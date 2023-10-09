@@ -1,4 +1,5 @@
-build_catalog:
+setup:
+  stage: setup_env
   script:
     - zypper addrepo https://download.opensuse.org/repositories/devel:languages:nodejs/SLE_12_SP5/devel:languages:nodejs.repo
     - zypper --non-interactive --no-gpg-checks refresh
@@ -8,6 +9,10 @@ build_catalog:
     - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
     - podman info
     - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+versioning:
+  stage: check_version
+  script:
     - |
       PACKAGE_VERSION=$(jq -r .version ./package.json)
       PACKAGE_NAME=$(jq -r .name ./package.json)
@@ -19,13 +24,20 @@ build_catalog:
       for version in "${VERSIONS[@]}"; do
         if [[ ${version} == ${PACKAGE_VERSION} ]]; then
           echo "Package version has not been updated, skipping build."
+          podman logout $CI_REGISTRY
           exit 1
         fi
       done
+
+build:
+  stage: build_catalog
+  script:
     - npm install -g --unsafe-perm yarn
     - yarn
     - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAME
+
+release:
+  stage: release_catalog
+  script:
     - podman push `podman images -f reference!=registry.suse.com/bci/bci-base --format "{{index .Names 0}}"`
     - podman logout $CI_REGISTRY
-  tags:
-    - linux
