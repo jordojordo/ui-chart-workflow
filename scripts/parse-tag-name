@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 GITHUB_RELEASE_TAG=$1
 GITHUB_RUN_ID=$2
 GITHUB_WORKFLOW_TYPE=$3

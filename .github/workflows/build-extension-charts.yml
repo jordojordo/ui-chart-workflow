@@ -43,9 +43,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          wget https://raw.githubusercontent.com/jordojordo/ui-chart-workflow/main/scripts/parse-ext-name.sh
-          chmod +x ./parse-ext-name.sh
-          ./parse-ext-name.sh ${{ inputs.tagged_release }} ${{ github.run_id }} "charts"
+          wget https://raw.githubusercontent.com/jordojordo/ui-chart-workflow/main/scripts/parse-tag-name
+          chmod +x ./parse-tag-name
+          ./parse-tag-name ${{ inputs.tagged_release }} ${{ github.run_id }} "charts"
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
