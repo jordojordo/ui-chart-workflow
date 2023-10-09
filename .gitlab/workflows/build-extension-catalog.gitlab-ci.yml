@@ -6,6 +6,8 @@ versions:
       PACKAGE_VERSION=$(jq -r .version ./package.json)
       PACKAGE_NAME=$(jq -r .name ./package.json)
       IMAGE=$REGISTRY/$IMAGE_NAME/ui-extension-$PACKAGE_NAME
+      echo "check this first"
+      curl --header "PRIVATE-TOKEN: $CI_REGISTRY_PASSWORD" "$CI_REGISTRY_IMAGE/tags"
       
       readarray -t VERSIONS < <(curl --header "PRIVATE-TOKEN: $CI_REGISTRY_PASSWORD" "$CI_REGISTRY_IMAGE/tags")
 
