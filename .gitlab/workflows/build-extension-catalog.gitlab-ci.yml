@@ -1,4 +1,5 @@
-build_catalog:
+build_and_release:
+  stage: build_catalog
   script:
     - zypper addrepo https://download.opensuse.org/repositories/devel:languages:nodejs/SLE_12_SP5/devel:languages:nodejs.repo
     - zypper --non-interactive --no-gpg-checks refresh
