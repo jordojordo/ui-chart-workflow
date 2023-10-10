@@ -9,17 +9,26 @@ build_and_release:
     - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
     - podman info
     - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - |
+      echo 'Checking for version collisions...'
+      PACKAGE_VERSION=`jq -r .version package.json`
+      PACKAGE_NAME=`jq -r .name package.json`
+
+      readarray -t VERSIONS < <(podman search $CI_REGISTRY_IMAGE/ui-extension-$PACKAGE_NAME --list-tags --format {{.Tag}})
+
+      echo -e "VERSIONS: ${VERSIONS}"
+      echo -e "Package version: ${PACKAGE_VERSION}"
+      for version in ${VERSIONS[@]}; do
+        if [[ ${version} == ${PACKAGE_VERSION} ]]; then
+          echo "Cannot overwrite production image version ${version} since it already exists."
+          podman logout $CI_REGISTRY
+          exit 1
+        fi
+      done
     - npm install -g --unsafe-perm yarn
     - yarn
-    - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAME
-    - |
-      IMAGE=`podman images -f reference!=registry.suse.com/bci/bci-base --format "{{index .Names 0}}"`
-      
-      if podman manifest inspect ${IMAGE} 2>&1 1>/dev/null; then
-        echo -e "Cannot overwrite production image ${IMAGE} since it already exists."
-      else
-        podman push $IMAGE
-      fi
+    - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAMESPACE
+    - podman push `podman images -f reference!=registry.suse.com/bci/bci-base --format "{{index .Names 0}}"`
     - podman logout $CI_REGISTRY
   tags:
     - linux
