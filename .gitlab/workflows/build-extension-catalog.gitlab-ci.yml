@@ -2,7 +2,7 @@
   - zypper --non-interactive install jq podman
   - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
   - podman info
-  - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY
 
 check_version_collisions:
   stage: check_version
@@ -16,7 +16,7 @@ check_version_collisions:
       PACKAGE_VERSION=`jq -r .version package.json`
       PACKAGE_NAME=`jq -r .name package.json`
 
-      readarray -t VERSIONS < <(podman search $CI_REGISTRY_IMAGE/ui-extension-$PACKAGE_NAME --list-tags --format {{.Tag}})
+      readarray -t VERSIONS < <(podman search $REGISTRY/$IMAGE_NAMESPACE/ui-extension-$PACKAGE_NAME --list-tags --format {{.Tag}})
 
       echo -e "VERSIONS: ${VERSIONS}"
       echo -e "Package version: ${PACKAGE_VERSION}"
@@ -27,6 +27,8 @@ check_version_collisions:
           exit 1
         fi
       done
+
+      echo -e "Published image not found for version ${PACKAGE_VERSION}, continuing build..."
   tags:
     - linux
 
@@ -46,6 +48,6 @@ build_and_release:
     - yarn
     - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAMESPACE
     - podman push `podman images -f reference!=registry.suse.com/bci/bci-base --format "{{index .Names 0}}"`
-    - podman logout $CI_REGISTRY
+    - podman logout $REGISTRY
   tags:
     - linux
