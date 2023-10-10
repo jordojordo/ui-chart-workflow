@@ -1,14 +1,16 @@
-build_and_release:
-  stage: build_catalog
+.podman-setup: &podman-setup
+  - zypper --non-interactive install jq podman
+  - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
+  - podman info
+  - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+check_version_collisions:
+  stage: check_version
+  rules:
+    - changes:
+        - package.json
   script:
-    - zypper addrepo https://download.opensuse.org/repositories/devel:languages:nodejs/SLE_12_SP5/devel:languages:nodejs.repo
-    - zypper --non-interactive --no-gpg-checks refresh
-    - zypper --non-interactive install go git nodejs14 npm helm jq podman nmap
-    - YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64"
-    - curl -sLf ${YQ_URL} -o /usr/bin/yq && chmod +x /usr/bin/yq
-    - usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $(id -nu)
-    - podman info
-    - podman login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - *podman-setup
     - |
       echo 'Checking for version collisions...'
       PACKAGE_VERSION=`jq -r .version package.json`
@@ -25,6 +27,21 @@ build_and_release:
           exit 1
         fi
       done
+  tags:
+    - linux
+
+build_and_release:
+  stage: build_catalog
+  rules:
+    - changes:
+        - package.json
+  script:
+    - *podman-setup
+    - zypper addrepo https://download.opensuse.org/repositories/devel:languages:nodejs/SLE_12_SP5/devel:languages:nodejs.repo
+    - zypper --non-interactive --no-gpg-checks refresh
+    - zypper --non-interactive install go git nodejs14 npm helm
+    - YQ_URL="https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64"
+    - curl -sLf ${YQ_URL} -o /usr/bin/yq && chmod +x /usr/bin/yq
     - npm install -g --unsafe-perm yarn
     - yarn
     - ./scripts/publish -cl -r $REGISTRY -o $IMAGE_NAMESPACE
